@@ -1,7 +1,9 @@
 #include <Arduino.h>
 
 // put function declarations here:
-int myFunction(int, int);
+int ChallengeOne(int, int);
+int ChallengeTwo(int, int);
+int ChallengeThree(int, int);
 
 void setup() {
 
@@ -33,7 +35,15 @@ void loop() {
 }
 
 // put function definitions here:
-int myFunction(int x, int y) {
+int ChallengeOne(int x, int y) {
+  return x + y;
+}
+
+int ChallengeTwo(int x, int y) {
+  return x + y;
+}
+
+int ChallengeThree(int x, int y) {
   return x + y;
 }
 
