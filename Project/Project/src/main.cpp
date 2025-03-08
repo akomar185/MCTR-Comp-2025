@@ -1,14 +1,39 @@
 #include <Arduino.h>
 
+
+#include <IRremote.hpp>
+
+#include <Arduino_JSON.h>
+
+
+using namespace std;
+
+
+const int RECV_PIN = A0;
+JSONVar irmap;
+
 // put function declarations here:
 int ChallengeOne(int, int);
 int ChallengeTwo(int, int);
 int ChallengeThree(int, int);
 
 void setup() {
-
-  // Setup IMU settings
   Serial.begin(19200);
+
+  IrReceiver.begin(RECV_PIN, ENABLE_LED_FEEDBACK);
+  irmap["3910598400"] = 0;
+  irmap["4077715200"] = 1;
+  irmap["3877175040"] = 2;
+  irmap["2707357440"] = 3;
+  irmap["4144561920"] = 4;
+  irmap["3810328320"] = 5;
+  irmap["2774204160"] = 6;
+  irmap["3175284480"] = 7;
+  irmap["2907897600"] = 8;
+  irmap["3041591040"] = 9;
+  irmap["0"] = 99;
+  // Setup IMU settings
+
   Wire.begin();                      // Initialize comunication
   Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
   Wire.write(0x6B);                  // Talk to the register 6B
@@ -32,6 +57,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  // catch IR signal and decide what to do
+  if (IrReceiver.decode()) {
+    String str = String(IrReceiver.decodedIRData.decodedRawData);
+    int key = irmap[str];
+    IrReceiver.resume(); // Enable receiving of the next value
+    }
 }
 
 // put function definitions here:
@@ -100,3 +132,5 @@ int IMU() {
    Serial.print("/");
    Serial.println(yaw);
 }
+
+
