@@ -1,3 +1,8 @@
+#include <MPU6050_tockn.h>
+
+#include <Wire.h>
+
+
 #include <Arduino.h>
 #include <IRremote.hpp>
 #include <Arduino_JSON.h>
@@ -9,22 +14,51 @@ const int RECV_PIN = A0;
 JSONVar irmap;
 
 // Motor driver pinout
-const int ena = 13;
-const int enb = 12;
+const int ena = 11;
+const int enb = 10;
 
-const int in1 = 22;
-const int in2 = 24;
-const int in3 = 26;
-const int in4 = 28;
+const int in1 = 30; // try switching these to see if error persists? is so, hardware fs
+const int in2 = 32;
+const int in3 = 34;
+const int in4 = 36;
+
+//GYRO Setup and Pinout
+// const int SDA1 = 20;
+// const int SCL1 = 21;
+MPU6050 mpu(Wire);
+
+const int MPU = 0x68; // MPU6050 I2C address
+float AccX, AccY, AccZ;
+float GyroX, GyroY, GyroZ;
+float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
+float roll, pitch, yaw;
+float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
+float elapsedTime, currentTime, previousTime;
+int c = 0;
 
 // movement variables
 int prev_key = 0;
+int pause = 0;
 int key;
+int turn_counter;
 
-int challenge_num = 1;
+int challenge_num = 0;
 
 void setup() {
   Serial.begin(9600);
+  while (!Serial){
+    delay(20);
+  }
+
+  Serial.println("Setup started!");
+
+  Serial.begin(19200);
+  Wire.begin();                      // Initialize comunication
+  Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
+  Wire.write(0x6B);                  // Talk to the register 6B
+  Wire.write(0x00);                  // Make reset - place a 0 into the 6B register
+  Wire.endTransmission(true);        //end the transmission
+  Serial.println("Made it after mpu.begin");
 
 
   
@@ -52,17 +86,34 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
+  Serial.println("Setup finsihed!");
 
 }
 
 void loop() {
   // catch IR signal and decide what to do
 
+  mpu.update();
+  Serial.print("GyroX: "); Serial.print(mpu.getGyroX());
+  Serial.print(" | GyroY: "); Serial.print(mpu.getGyroY());
+  Serial.print(" | GyroZ: "); Serial.println(mpu.getGyroZ());
+  delay(500);
+
+
+  if (pause >= 4) {
+    key = -1;
+  }
+  pause ++;
   if (IrReceiver.decode()) {
     String str = String(IrReceiver.decodedIRData.decodedRawData);
     key = irmap[str];
+    pause = 0;
+    
     IrReceiver.resume(); // Enable receiving of the next value
+  } else {
+    delay(50);
   }
+  // Serial.println(key);
   move(key);
 
   
@@ -77,9 +128,15 @@ void loop() {
 
 // movement functions
 void move(int key) {
-  if (key == 99) {
+  if (key == 99 && (prev_key == 7 || prev_key == 9)) {
+    turn_counter ++;
+    if (turn_counter >= 1) {
+      return;
+    }
+  } else if (key == 99) {
     key = prev_key;
   }
+  turn_counter = 0;
   prev_key = key;
   switch (key) {
     case 5: forwards(255); break;
@@ -125,10 +182,11 @@ void left(int speed) {
 
   analogWrite(ena, speed);
   analogWrite(enb, speed);
-  digitalWrite(in1, LOW);
-  digitalWrite(in2, HIGH);
-  digitalWrite(in3, HIGH);
-  digitalWrite(in4, LOW);
+  digitalWrite(in1, HIGH);
+  digitalWrite(in2, LOW);
+  digitalWrite(in3, LOW);
+  digitalWrite(in4, HIGH);
+  
 }
 
 void right(int speed) {
@@ -136,15 +194,18 @@ void right(int speed) {
 
   analogWrite(ena, speed);
   analogWrite(enb, speed);
-  digitalWrite(in1, HIGH);
-  digitalWrite(in2, LOW);
-  digitalWrite(in3, LOW);
-  digitalWrite(in4, HIGH);
+  digitalWrite(in1, LOW);
+  digitalWrite(in2, HIGH);
+  digitalWrite(in3, HIGH);
+  digitalWrite(in4, LOW);
+  
 }
+
 
 // challenge operating stuff
 void challengeOne() {
-  return;
+  //Get gyro data
+
 }
 
 void challengeTwo() {
