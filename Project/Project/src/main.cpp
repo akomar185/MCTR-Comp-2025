@@ -7,6 +7,9 @@
 #include <IRremote.hpp>
 #include <Arduino_JSON.h>
 
+#include <Servo.h> // servo dependencies
+
+
 using namespace std;
 
 //IR reciever pinout and key-setup
@@ -43,6 +46,10 @@ int key;
 int turn_counter;
 
 int challenge_num = 0;
+
+// servo setup
+Servo claw;
+Servo lift;
 
 void setup() {
   Serial.begin(9600);
@@ -87,6 +94,10 @@ void setup() {
   pinMode(in4, OUTPUT);
 
   Serial.println("Setup finsihed!");
+
+  // servo motor setup
+  claw.attach(22)
+  lift.attach(24)
 
 }
 
