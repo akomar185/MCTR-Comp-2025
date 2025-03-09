@@ -47,9 +47,15 @@ int turn_counter;
 
 int challenge_num = 0;
 
-// servo setup
+//SERVO SETUP
 Servo claw;
 Servo lift;
+
+//ULTRASONIC SENSOR SETUP
+
+// Define Trig and Echo pins.
+const int TRIG_PIN = 50;
+const int ECHO_PIN = 48;
 
 void setup() {
   Serial.begin(9600);
@@ -99,6 +105,9 @@ void setup() {
   claw.attach(22)
   lift.attach(24)
 
+  //ULTRASONIC SENSOR SETUP
+  pinMode(TRIG_PIN, OUTPUT);
+  pinMode(ECHO_PIN, INPUT);
 }
 
 void loop() {
@@ -135,6 +144,16 @@ void loop() {
     case 3: challengeThree(); break;
   }
 
+  int distanceCentimeters = getDistanceCentimeters();
+
+
+  // Print the distance on the Serial Monitor.
+  Serial.print("Distance = ");
+  Serial.print(distanceCentimeters);
+  Serial.println(" cm");
+
+
+  delay(50);
 }
 
 // movement functions
@@ -212,6 +231,28 @@ void right(int speed) {
   
 }
 
+//function to convert the signal from the ultrasonic sensor to a distance value
+int getDistanceCentimeters() {
+  // Clear the trigPin by setting it LOW.
+  digitalWrite(TRIG_PIN, LOW);
+  delayMicroseconds(5);
+
+
+  // Trigger the sensor by setting the trigPin high for 10 microseconds.
+  digitalWrite(TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG_PIN, LOW);
+
+
+  // Read the echoPin, pulseIn() returns the duration (length of the pulse) in microseconds.
+  long durationMicroseconds = pulseIn(ECHO_PIN, HIGH);
+  // Calculate the distance in centimeters. Note that at 20 degrees Celcius, the speed of sound
+  // is roughly 0.034 cm / us.
+  int distanceCentimeters = durationMicroseconds * 0.034 / 2;
+
+
+  return distanceCentimeters;
+}
 
 // challenge operating stuff
 void challengeOne() {
