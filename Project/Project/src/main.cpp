@@ -110,12 +110,12 @@ void setup() {
 
   // mpu offsets
   Serial.println("Updating internal sensor offsets...\n");
-  mpu.setXAccelOffset(0); //Set your accelerometer offset for axis X
-  mpu.setYAccelOffset(0); //Set your accelerometer offset for axis Y
-  mpu.setZAccelOffset(0); //Set your accelerometer offset for axis Z
-  mpu.setXGyroOffset(0);  //Set your gyro offset for axis X
-  mpu.setYGyroOffset(0);  //Set your gyro offset for axis Y
-  mpu.setZGyroOffset(0);  //Set your gyro offset for axis Z
+  mpu.setXAccelOffset(32767); //Set your accelerometer offset for axis X
+  mpu.setYAccelOffset(-12960); //Set your accelerometer offset for axis Y
+  mpu.setZAccelOffset(7099); //Set your accelerometer offset for axis Z
+  mpu.setXGyroOffset(-273);  //Set your gyro offset for axis X
+  mpu.setYGyroOffset(-10);  //Set your gyro offset for axis Y
+  mpu.setZGyroOffset(24);  //Set your gyro offset for axis Z
   
   /*Print the defined offsets*/
   // Serial.print("\t");
@@ -163,7 +163,14 @@ void loop() {
   // Serial.println(" cm");
 
   //mpu stuff
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);\
+  ax = axNew*0.1 + ax*0.9;
+  ay = ayNew*0.1 + ay*0.9;
+  az = azNew*0.1 + az*0.9;
+
+  gx = gxNew*0.1 + gx*0.9;
+  gy = gyNew*0.1 + gy*0.9;
+  gz = gzNew*0.1 + gz*0.9;
   Serial.print("a/g:\t");
     Serial.print(ax); Serial.print("\t");
     Serial.print(ay); Serial.print("\t");
