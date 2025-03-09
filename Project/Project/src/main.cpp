@@ -34,9 +34,9 @@ int16_t theta;
 
 
 //SERVO SETUP
-Servo claw;
+Servo lift1;
 Servo lift;
-
+int const step_delay = 20
   
 
 //ULTRASONIC SENSOR SETUP
@@ -52,19 +52,17 @@ int key;
 int turn_counter;
 
 int challenge_num = 0;
+int angle = 0
 
 void setup() {
 
   Serial.begin(9600);
   Wire.begin();
   //0 is closed
-  claw.attach(3);
-  claw.write(0);
-  delay(1000);
-  claw.write(45);
-  delay(1000);
-  claw.write(0);
-  delay(1000);
+  lift.attach(3);
+  lift1.attach(4);
+  lift1.write(angle);
+  lift2.write(angle);
 
 
   Serial.println("started");
@@ -294,20 +292,27 @@ int getDistanceCentimeters() {
 }
 
 //CLAW CONTORL FUNCTIONS
-void clawOpen() {
-  claw.write(0)
+
+
+void liftUp() {
+  while (angle<60) {
+    angle++;
+    lift1.write(angle);
+    lift.write(angle);
+    delay(step_delay);
+  }
+  
 }
 
-void clawClose() {
-  claw.write(0)
+void liftDown() {
+  while (angle>=0) {
+    angle--;
+    lift1.write(angle);
+    lift.write(angle);
+    delay(step_delay);
+  }
 }
 
-void clawUp() {
-  lift.write(90)
-}
-
-void clawDown() {
-  lift.write(0)
 }
 
 // challenge operating stuff
