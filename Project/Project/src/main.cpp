@@ -33,13 +33,13 @@ int16_t ax, ay, az;
 int16_t gx, gy, gz;
 int16_t axNew, ayNew, azNew;
 int16_t gxNew, gyNew, gzNew;
-double theta;
+int prev_val = 0;
+int diff = 0;
 
 
 //SERVO SETUP
-Servo lift1;
 Servo lift;
-int const step_delay = 20
+int const step_delay = 20;
   
 
 //ULTRASONIC SENSOR SETUP
@@ -54,8 +54,8 @@ int pause = 0;
 int key;
 int turn_counter;
 
-int challenge_num = 0;
-int angle = 0
+int challenge_num = 1;
+int angle = 30;
 
 void setup() {
 
@@ -63,9 +63,7 @@ void setup() {
   Wire.begin();
   //0 is closed
   lift.attach(3);
-  lift1.attach(4);
-  lift1.write(angle);
-  lift2.write(angle);
+  lift.write(angle);
 
 
   Serial.println("started");
@@ -100,9 +98,6 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
-  // servo motor setup
-  claw.attach(3);
-  lift.attach(4);
 
   //ULTRASONIC SENSOR SETUP
   pinMode(TRIG_PIN, OUTPUT);
@@ -272,29 +267,37 @@ int getDistanceCentimeters() {
   return distanceCentimeters;
 }
 
-//CLAW CONTORL FUNCTIONS
+//lift CONTORL FUNCTIONS
 
 
 void liftUp() {
-  while (angle<60) {
-    angle++;
-    lift1.write(angle);
-    lift.write(angle);
-    delay(step_delay);
+  if (angle >= 10){
+    angle -= 5;
   }
+  lift.write(angle);
+  delay(10);
+  // while (angle>10) {
+  //   angle--;
+  //   lift.write(angle);
+  //   delay(step_delay);
+  // }
   
 }
 
 void liftDown() {
-  while (angle>=0) {
-    angle--;
-    lift1.write(angle);
-    lift.write(angle);
-    delay(step_delay);
+  if (angle <= 60){
+    angle += 5;
   }
+  
+  lift.write(angle);
+  delay(10);
+  // while (angle<60) {
+  //   angle++;
+  //   lift.write(angle);
+  //   delay(step_delay);
+  // }
 }
 
-}
 
 // challenge operating stuff
 void challengeOne() {
@@ -302,26 +305,17 @@ void challengeOne() {
 
   //mpu stuff
   mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);
-  ax = simpleKalmanFilter.updateEstimate(axNew);
-  ay = ayNew*0.05 + ay*0.95;
-  az = azNew*0.05 + az*0.95;
-
-  gx = gxNew*0.1 + gx*0.9;
-  gy = gyNew*0.1 + gy*0.9;
-  gz = gzNew*0.1 + gz*0.9;
+  ax = simpleKalmanFilter.updateEstimate(axNew) - 280;
   Serial.print("a/g:\t");
   Serial.print(ax); Serial.print("\t");
   Serial.print(axNew); Serial.print("\t");
   Serial.print(gy); Serial.print("\t");
+  Serial.println("");
 
-  
-  theta = atan(-ax/sqrt(ay^2+az^2));
-  Serial.println(theta*180/3.1415926);
+  diff = ax - prev_val;
 
-  
-  
-  delay(100);
 
+  prev_val = ax;
 }
 
 void challengeTwo() {
