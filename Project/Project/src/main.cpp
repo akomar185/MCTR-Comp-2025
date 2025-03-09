@@ -210,6 +210,8 @@ void move(int key) {
     case 7: left(255); break;
     case 8: backwards(255); break;
     case 9: right(255); break;
+    case 0: liftUp(); break;
+    case 1: liftDown(); break;
     default: stop(); break;
   }
 }
