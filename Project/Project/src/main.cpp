@@ -10,6 +10,7 @@
 #include <Arduino_JSON.h>
 
 using namespace std;
+bool DONTMOVE = false;
 
 //IR reciever pinout and key-setup
 const int RECV_PIN = A0;
@@ -39,7 +40,6 @@ int diff = 0;
 
 //SERVO SETUP
 Servo lift;
-int const step_delay = 20;
   
 
 //ULTRASONIC SENSOR SETUP
@@ -49,12 +49,13 @@ const int TRIG_PIN = 50;
 const int ECHO_PIN = 48;
 
 // movement variables
-int prev_key = 0;
+int prev_key = -1;
 int pause = 0;
 int key;
 int turn_counter;
 
-int challenge_num = 1;
+int challenge_num = 0;
+int challenge1_counter = 0;
 int angle = 30;
 
 void setup() {
@@ -127,12 +128,17 @@ void setup() {
   Serial.print("\t");
   Serial.print(mpu.getZGyroOffset());
   Serial.print("\n");
+
+  if(challenge_num == 1) {
+    Serial.println("ASD");
+    lift.write(5); forwards(255); delay(1000); 
+  }
 }
 
 void loop() {
   // catch IR signal and decide what to do
 
-  if (pause >= 4) {
+  if (pause >=3) {
     key = -1;
   }
   pause ++;
@@ -146,11 +152,10 @@ void loop() {
     delay(50);
   }
   // Serial.println(key);
-  move(key);
 
 
 
-  int distanceCentimeters = getDistanceCentimeters();
+  // int distanceCentimeters = getDistanceCentimeters();
 
 
   // Print the distance on the Serial Monitor.
@@ -160,6 +165,7 @@ void loop() {
   
   // challenge specific code
   switch (challenge_num) {
+    case 0: move(key); break;
     case 1: challengeOne(); break;
     case 2: challengeTwo(); break;
     case 3: challengeThree(); break;
@@ -179,13 +185,14 @@ void move(int key) {
   }
   turn_counter = 0;
   prev_key = key;
+  // Serial.println(key);
   switch (key) {
     case 5: forwards(255); break;
     case 7: left(255); break;
     case 8: backwards(255); break;
     case 9: right(255); break;
-    case 0: liftUp(); break;
-    case 1: liftDown(); break;
+    case 1: liftUp(); break;
+    case 4: liftDown(); break;
     default: stop(); break;
   }
 }
@@ -271,49 +278,61 @@ int getDistanceCentimeters() {
 
 
 void liftUp() {
-  if (angle >= 10){
-    angle -= 5;
+  Serial.println("up");
+  if (angle >= -1){
+    angle -= 2;
   }
   lift.write(angle);
-  delay(10);
-  // while (angle>10) {
-  //   angle--;
-  //   lift.write(angle);
-  //   delay(step_delay);
-  // }
-  
+
 }
 
 void liftDown() {
-  if (angle <= 60){
-    angle += 5;
+  Serial.println("down");
+  if (angle <= 40){
+    angle += 2;
   }
   
   lift.write(angle);
-  delay(10);
-  // while (angle<60) {
-  //   angle++;
-  //   lift.write(angle);
-  //   delay(step_delay);
-  // }
+
 }
 
 
 // challenge operating stuff
 void challengeOne() {
+lift.write(30);
+
   //Get gyro data
 
   //mpu stuff
   mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);
-  ax = simpleKalmanFilter.updateEstimate(axNew) - 280;
-  Serial.print("a/g:\t");
-  Serial.print(ax); Serial.print("\t");
-  Serial.print(axNew); Serial.print("\t");
-  Serial.print(gy); Serial.print("\t");
-  Serial.println("");
+  ax = simpleKalmanFilter.updateEstimate(axNew) + 500;
+  
 
   diff = ax - prev_val;
 
+  Serial.print("a/g:\t");
+  Serial.print(prev_val); Serial.print("\t");
+  Serial.print(ax); Serial.print("\t");
+  Serial.print(diff); Serial.print("\t");
+  Serial.print(challenge1_counter); Serial.print("\t");
+  Serial.println("");
+  if (diff < -200){
+    challenge1_counter += 1;
+  }
+
+  if (challenge1_counter >= 5){
+    if (!DONTMOVE) {
+        backwards(255);
+      delay(800);
+      DONTMOVE = true;
+    }
+    
+    stop();
+  } else{
+    forwards(255);
+  }
+
+  
 
   prev_val = ax;
 }
