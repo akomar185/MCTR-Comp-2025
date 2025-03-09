@@ -1,14 +1,13 @@
-#include <MPU6050_tockn.h>
+#include <MPU6050.h>
+
+#include <Servo.h> // servo dependencies
+
 
 #include <Wire.h>
-
 
 #include <Arduino.h>
 #include <IRremote.hpp>
 #include <Arduino_JSON.h>
-
-#include <Servo.h> // servo dependencies
-
 
 using namespace std;
 
@@ -28,24 +27,7 @@ const int in4 = 36;
 //GYRO Setup and Pinout
 // const int SDA1 = 20;
 // const int SCL1 = 21;
-MPU6050 mpu(Wire);
-
-const int MPU = 0x68; // MPU6050 I2C address
-float AccX, AccY, AccZ;
-float GyroX, GyroY, GyroZ;
-float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
-float roll, pitch, yaw;
-float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
-float elapsedTime, currentTime, previousTime;
-int c = 0;
-
-// movement variables
-int prev_key = 0;
-int pause = 0;
-int key;
-int turn_counter;
-
-int challenge_num = 0;
+MPU6050 mpu;
 
 //SERVO SETUP
 Servo claw;
@@ -57,21 +39,28 @@ Servo lift;
 const int TRIG_PIN = 50;
 const int ECHO_PIN = 48;
 
+// movement variables
+int prev_key = 0;
+int pause = 0;
+int key;
+int turn_counter;
+
+int challenge_num = 0;
+
 void setup() {
   Serial.begin(9600);
-  while (!Serial){
-    delay(20);
+  Wire.begin();
+
+
+  Serial.println("started");
+  mpu.initialize();
+  if(mpu.testConnection()){
+    Serial.println("connected");
+  } else {
+    Serial.println("not successfull");
   }
 
-  Serial.println("Setup started!");
-
-  Serial.begin(19200);
-  Wire.begin();                      // Initialize comunication
-  Wire.beginTransmission(MPU);       // Start communication with MPU6050 // MPU=0x68
-  Wire.write(0x6B);                  // Talk to the register 6B
-  Wire.write(0x00);                  // Make reset - place a 0 into the 6B register
-  Wire.endTransmission(true);        //end the transmission
-  Serial.println("Made it after mpu.begin");
+  
 
 
   
@@ -99,11 +88,9 @@ void setup() {
   pinMode(in3, OUTPUT);
   pinMode(in4, OUTPUT);
 
-  Serial.println("Setup finsihed!");
-
   // servo motor setup
-  claw.attach(22)
-  lift.attach(24)
+  claw.attach(22);
+  lift.attach(24);
 
   //ULTRASONIC SENSOR SETUP
   pinMode(TRIG_PIN, OUTPUT);
@@ -112,13 +99,6 @@ void setup() {
 
 void loop() {
   // catch IR signal and decide what to do
-
-  mpu.update();
-  Serial.print("GyroX: "); Serial.print(mpu.getGyroX());
-  Serial.print(" | GyroY: "); Serial.print(mpu.getGyroY());
-  Serial.print(" | GyroZ: "); Serial.println(mpu.getGyroZ());
-  delay(500);
-
 
   if (pause >= 4) {
     key = -1;
@@ -136,13 +116,7 @@ void loop() {
   // Serial.println(key);
   move(key);
 
-  
-  // challenge specific code
-  switch (challenge_num) {
-    case 1: challengeOne(); break;
-    case 2: challengeTwo(); break;
-    case 3: challengeThree(); break;
-  }
+
 
   int distanceCentimeters = getDistanceCentimeters();
 
@@ -151,9 +125,14 @@ void loop() {
   Serial.print("Distance = ");
   Serial.print(distanceCentimeters);
   Serial.println(" cm");
+  
+  // challenge specific code
+  switch (challenge_num) {
+    case 1: challengeOne(); break;
+    case 2: challengeTwo(); break;
+    case 3: challengeThree(); break;
+  }
 
-
-  delay(50);
 }
 
 // movement functions
