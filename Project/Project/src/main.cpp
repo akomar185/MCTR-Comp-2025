@@ -1,3 +1,4 @@
+
 #include <MPU6050.h>
 #include <SimpleKalmanFilter.h>
 #include <Servo.h> // servo dependencies
@@ -8,6 +9,10 @@
 #include <Arduino.h>
 #include <IRremote.hpp>
 #include <Arduino_JSON.h>
+
+// buzzer
+const int buzzer = 13;
+int note = 0;
 
 using namespace std;
 bool DONTMOVE = false;
@@ -74,6 +79,9 @@ void setup() {
   } else {
     Serial.println("not successfull");
   }
+
+  // buzzer
+  pinMode(buzzer, OUTPUT);
   
   // ir reciever pinout setup
   pinMode(RECV_PIN, INPUT);
@@ -88,6 +96,7 @@ void setup() {
   irmap["3175284480"] = 7;
   irmap["2907897600"] = 8;
   irmap["3041591040"] = 9;
+  irmap["3091726080"] = 66;
   irmap["0"] = 99;
 
   // motor driver pinout setup
@@ -130,7 +139,6 @@ void setup() {
   Serial.print("\n");
 
   if(challenge_num == 1) {
-    Serial.println("ASD");
     lift.write(5); forwards(255); delay(1000); 
   }
 }
@@ -171,6 +179,10 @@ void loop() {
     case 3: challengeThree(); break;
   }
 
+
+
+
+
 }
 
 // movement functions
@@ -193,6 +205,7 @@ void move(int key) {
     case 9: right(255); break;
     case 1: liftUp(); break;
     case 4: liftDown(); break;
+    case 66: challenge_num = 1; lift.write(5); forwards(255); delay(1000); Serial.println("CHallenge 1 begins"); break;
     default: stop(); break;
   }
 }
@@ -299,6 +312,7 @@ void liftDown() {
 
 // challenge operating stuff
 void challengeOne() {
+  
 lift.write(30);
 
   //Get gyro data
@@ -316,7 +330,7 @@ lift.write(30);
   Serial.print(diff); Serial.print("\t");
   Serial.print(challenge1_counter); Serial.print("\t");
   Serial.println("");
-  if (diff < -200){
+  if (diff < -400){
     challenge1_counter += 1;
   }
 
@@ -344,3 +358,5 @@ void challengeTwo() {
 void challengeThree() {
   return;
 }
+
+
