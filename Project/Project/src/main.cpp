@@ -1,5 +1,5 @@
 #include <MPU6050.h>
-
+#include <SimpleKalmanFilter.h>
 #include <Servo.h> // servo dependencies
 
 
@@ -28,9 +28,12 @@ const int in4 = 36;
 // const int SDA1 = 20;
 // const int SCL1 = 21;
 MPU6050 mpu;
+SimpleKalmanFilter simpleKalmanFilter(100,2,0.05);
 int16_t ax, ay, az;
 int16_t gx, gy, gz;
-int16_t theta;
+int16_t axNew, ayNew, azNew;
+int16_t gxNew, gyNew, gzNew;
+double theta;
 
 
 //SERVO SETUP
@@ -108,27 +111,27 @@ void setup() {
 
   // mpu offsets
   Serial.println("Updating internal sensor offsets...\n");
-  mpu.setXAccelOffset(32767); //Set your accelerometer offset for axis X
-  mpu.setYAccelOffset(-12960); //Set your accelerometer offset for axis Y
-  mpu.setZAccelOffset(7099); //Set your accelerometer offset for axis Z
-  mpu.setXGyroOffset(-273);  //Set your gyro offset for axis X
-  mpu.setYGyroOffset(-10);  //Set your gyro offset for axis Y
-  mpu.setZGyroOffset(24);  //Set your gyro offset for axis Z
+  mpu.setXAccelOffset(-5485); //Set your accelerometer offset for axis X
+  mpu.setYAccelOffset(1383); //Set your accelerometer offset for axis Y
+  mpu.setZAccelOffset(991); //Set your accelerometer offset for axis Z
+  mpu.setXGyroOffset(69);  //Set your gyro offset for axis X
+  mpu.setYGyroOffset(2);  //Set your gyro offset for axis Y
+  mpu.setZGyroOffset(-6);  //Set your gyro offset for axis Z
   
   /*Print the defined offsets*/
-  // Serial.print("\t");
-  // Serial.print(mpu.getXAccelOffset());
-  // Serial.print("\t");
-  // Serial.print(mpu.getYAccelOffset()); 
-  // Serial.print("\t");
-  // Serial.print(mpu.getZAccelOffset());
-  // Serial.print("\t");
-  // Serial.print(mpu.getXGyroOffset()); 
-  // Serial.print("\t");
-  // Serial.print(mpu.getYGyroOffset());
-  // Serial.print("\t");
-  // Serial.print(mpu.getZGyroOffset());
-  // Serial.print("\n");
+  Serial.print("\t");
+  Serial.print(mpu.getXAccelOffset());
+  Serial.print("\t");
+  Serial.print(mpu.getYAccelOffset()); 
+  Serial.print("\t");
+  Serial.print(mpu.getZAccelOffset());
+  Serial.print("\t");
+  Serial.print(mpu.getXGyroOffset()); 
+  Serial.print("\t");
+  Serial.print(mpu.getYGyroOffset());
+  Serial.print("\t");
+  Serial.print(mpu.getZGyroOffset());
+  Serial.print("\n");
 }
 
 void loop() {
@@ -159,30 +162,6 @@ void loop() {
   // Serial.print("Distance = ");
   // Serial.print(distanceCentimeters);
   // Serial.println(" cm");
-
-  //mpu stuff
-  mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);\
-  ax = axNew*0.1 + ax*0.9;
-  ay = ayNew*0.1 + ay*0.9;
-  az = azNew*0.1 + az*0.9;
-
-  gx = gxNew*0.1 + gx*0.9;
-  gy = gyNew*0.1 + gy*0.9;
-  gz = gzNew*0.1 + gz*0.9;
-  Serial.print("a/g:\t");
-    Serial.print(ax); Serial.print("\t");
-    Serial.print(ay); Serial.print("\t");
-    Serial.print(az); Serial.print("\t");
-    Serial.print(gx); Serial.print("\t");
-    Serial.print(gy); Serial.print("\t");
-    Serial.println(gz);
-  
-  theta = atan(ay/sqrt(ax^2+az^2));
-  Serial.println(theta);
-
-  
-  
-  delay(100);
   
   // challenge specific code
   switch (challenge_num) {
@@ -320,6 +299,28 @@ void liftDown() {
 // challenge operating stuff
 void challengeOne() {
   //Get gyro data
+
+  //mpu stuff
+  mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);
+  ax = simpleKalmanFilter.updateEstimate(axNew);
+  ay = ayNew*0.05 + ay*0.95;
+  az = azNew*0.05 + az*0.95;
+
+  gx = gxNew*0.1 + gx*0.9;
+  gy = gyNew*0.1 + gy*0.9;
+  gz = gzNew*0.1 + gz*0.9;
+  Serial.print("a/g:\t");
+  Serial.print(ax); Serial.print("\t");
+  Serial.print(axNew); Serial.print("\t");
+  Serial.print(gy); Serial.print("\t");
+
+  
+  theta = atan(-ax/sqrt(ay^2+az^2));
+  Serial.println(theta*180/3.1415926);
+
+  
+  
+  delay(100);
 
 }
 
