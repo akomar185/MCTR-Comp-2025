@@ -89,8 +89,8 @@ void setup() {
   pinMode(in4, OUTPUT);
 
   // servo motor setup
-  claw.attach(22);
-  lift.attach(24);
+  claw.attach(3);
+  lift.attach(4);
 
   //ULTRASONIC SENSOR SETUP
   pinMode(TRIG_PIN, OUTPUT);
@@ -231,6 +231,23 @@ int getDistanceCentimeters() {
 
 
   return distanceCentimeters;
+}
+
+//CLAW CONTORL FUNCTIONS
+void clawOpen() {
+  claw.write(0)
+}
+
+void clawClose() {
+  claw.write(0)
+}
+
+void clawUp() {
+  lift.write(90)
+}
+
+void clawDown() {
+  lift.write(0)
 }
 
 // challenge operating stuff
