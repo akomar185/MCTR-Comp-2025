@@ -28,10 +28,16 @@ const int in4 = 36;
 // const int SDA1 = 20;
 // const int SCL1 = 21;
 MPU6050 mpu;
+int16_t ax, ay, az;
+int16_t gx, gy, gz;
+int16_t theta;
+
 
 //SERVO SETUP
 Servo claw;
 Servo lift;
+
+  
 
 //ULTRASONIC SENSOR SETUP
 
@@ -48,8 +54,17 @@ int turn_counter;
 int challenge_num = 0;
 
 void setup() {
+
   Serial.begin(9600);
   Wire.begin();
+  //0 is closed
+  claw.attach(3);
+  claw.write(0);
+  delay(1000);
+  claw.write(45);
+  delay(1000);
+  claw.write(0);
+  delay(1000);
 
 
   Serial.println("started");
@@ -59,10 +74,6 @@ void setup() {
   } else {
     Serial.println("not successfull");
   }
-
-  
-
-
   
   // ir reciever pinout setup
   pinMode(RECV_PIN, INPUT);
@@ -95,6 +106,31 @@ void setup() {
   //ULTRASONIC SENSOR SETUP
   pinMode(TRIG_PIN, OUTPUT);
   pinMode(ECHO_PIN, INPUT);
+
+
+  // mpu offsets
+  Serial.println("Updating internal sensor offsets...\n");
+  mpu.setXAccelOffset(32767); //Set your accelerometer offset for axis X
+  mpu.setYAccelOffset(-12960); //Set your accelerometer offset for axis Y
+  mpu.setZAccelOffset(7099); //Set your accelerometer offset for axis Z
+  mpu.setXGyroOffset(-273);  //Set your gyro offset for axis X
+  mpu.setYGyroOffset(-10);  //Set your gyro offset for axis Y
+  mpu.setZGyroOffset(24);  //Set your gyro offset for axis Z
+  
+  /*Print the defined offsets*/
+  // Serial.print("\t");
+  // Serial.print(mpu.getXAccelOffset());
+  // Serial.print("\t");
+  // Serial.print(mpu.getYAccelOffset()); 
+  // Serial.print("\t");
+  // Serial.print(mpu.getZAccelOffset());
+  // Serial.print("\t");
+  // Serial.print(mpu.getXGyroOffset()); 
+  // Serial.print("\t");
+  // Serial.print(mpu.getYGyroOffset());
+  // Serial.print("\t");
+  // Serial.print(mpu.getZGyroOffset());
+  // Serial.print("\n");
 }
 
 void loop() {
@@ -122,9 +158,33 @@ void loop() {
 
 
   // Print the distance on the Serial Monitor.
-  Serial.print("Distance = ");
-  Serial.print(distanceCentimeters);
-  Serial.println(" cm");
+  // Serial.print("Distance = ");
+  // Serial.print(distanceCentimeters);
+  // Serial.println(" cm");
+
+  //mpu stuff
+  mpu.getMotion6(&axNew, &ayNew, &azNew, &gxNew, &gyNew, &gzNew);\
+  ax = axNew*0.1 + ax*0.9;
+  ay = ayNew*0.1 + ay*0.9;
+  az = azNew*0.1 + az*0.9;
+
+  gx = gxNew*0.1 + gx*0.9;
+  gy = gyNew*0.1 + gy*0.9;
+  gz = gzNew*0.1 + gz*0.9;
+  Serial.print("a/g:\t");
+    Serial.print(ax); Serial.print("\t");
+    Serial.print(ay); Serial.print("\t");
+    Serial.print(az); Serial.print("\t");
+    Serial.print(gx); Serial.print("\t");
+    Serial.print(gy); Serial.print("\t");
+    Serial.println(gz);
+  
+  theta = atan(ay/sqrt(ax^2+az^2));
+  Serial.println(theta);
+
+  
+  
+  delay(100);
   
   // challenge specific code
   switch (challenge_num) {
